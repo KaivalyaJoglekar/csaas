@@ -1,0 +1,56 @@
+/* Import a modern, clean font if you want to override the default.
+   (e.g., from Google Fonts, but keeping it simple for now) */
+   body {
+    margin: 0;
+    padding: 0;
+    font-family: 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/* --- Mesh Gradient for a Classy Background (Auth Page) --- */
+/* We define a container with a subtle background and use pseudo-elements for the blob effect */
+.auth-container-with-gradient {
+    position: relative;
+    overflow: hidden;
+    /* Main light background color */
+    background-color: #F8F9FB; 
+}
+
+/* Base style for the mesh blobs */
+.mesh-blob {
+    position: absolute;
+    width: 600px;
+    height: 600px;
+    border-radius: 50%;
+    filter: blur(150px); /* Massive blur for the soft mesh look */
+    opacity: 0.4; /* Keep it subtle */
+    transition: all 0.5s ease-in-out;
+    pointer-events: none; /* Allows clicks to pass through */
+}
+
+/* Blob 1: Top-Left Subtle Warmth */
+.mesh-blob-1 {
+    background: linear-gradient(135deg, #A8E6CF, #DCEDC8); /* Soft Mint/Cream */
+    top: -200px;
+    left: -200px;
+    transform: scale(0.8);
+}
+
+/* Blob 2: Bottom-Right Coolness (Matching Primary Blue) */
+.mesh-blob-2 {
+    background: linear-gradient(315deg, #BBDEFB, #90CAF9); /* Light Blues */
+    bottom: -250px;
+    right: -250px;
+    transform: scale(0.9);
+}
+
+/* Optional: Slight animation for an even cooler effect */
+.mesh-blob-1, .mesh-blob-2 {
+    animation: blob-float 15s infinite alternate ease-in-out;
+}
+
+@keyframes blob-float {
+    from { transform: translate(0, 0) scale(0.9); }
+    to { transform: translate(50px, 30px) scale(1.1); }
+}
