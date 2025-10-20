@@ -1,3 +1,5 @@
+# backend/auth/security.py
+
 import os
 from dotenv import load_dotenv
 from fastapi import HTTPException, Depends, Request
@@ -34,7 +36,9 @@ security = HTTPBearer()
 def get_user_role_from_db(user_id: str) -> str:
     """Queries the Supabase REST API to get the user's role."""
     try:
-        response = supabase.table('profiles').select('role').eq('id', user_id).single().execute()
+        # CORRECTED LINE: Use the admin client to bypass RLS for this trusted server-side check.
+        response = supabase_admin.table('profiles').select('role').eq('id', user_id).single().execute()
+        
         if response.data and 'role' in response.data:
             return response.data['role']
         return 'unknown' 

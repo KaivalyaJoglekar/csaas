@@ -12,7 +12,7 @@ import httpx # Required for API calls to external scanner/OpenVAS
 # --- Pydantic Models ---
 class DashboardSummary(BaseModel):
     threat_count: int
-    compliance_score: int
+    compliance_score: float
     pending_vendor_assessments: int
     user_role_focus: str
 
@@ -21,9 +21,17 @@ class DashboardResponse(BaseModel):
     user_role: str
     summary: DashboardSummary
 
-class RoleUpdate(BaseModel): # NEW MODEL
+class RoleUpdate(BaseModel):
     user_id: str
     role: str
+
+# NEW MODELS for feature implementation
+class ReportRequest(BaseModel):
+    report_type: str
+    user_id: str
+
+class ScanRequest(BaseModel):
+    target: str
 
 app = FastAPI(
     title="CSaaS Platform API",
@@ -58,7 +66,6 @@ def get_user_role_from_db(user_id: str) -> str:
 @app.get("/api/health")
 def health_check():
     try:
-        # Check connection using the Anon Key client (from auth/security.py)
         supabase.table('profiles').select('id', count='exact').limit(1).execute()
         db_status = "Connected"
     except Exception:
@@ -66,7 +73,6 @@ def health_check():
         
     return {"status": "ok", "db_status": db_status, "timestamp": time.time()}
 
-# NEW ENDPOINT: Called by registration form to set initial role (Uses Service Role Key)
 @app.post("/api/admin/set-user-role")
 async def set_user_role(update: RoleUpdate):
     """
@@ -76,7 +82,6 @@ async def set_user_role(update: RoleUpdate):
          raise HTTPException(status_code=400, detail="Invalid role specified.")
 
     try:
-        # Use the ADMIN client to UPDATE the profile table (bypasses RLS)
         response = supabase_admin.table('profiles').update({'role': update.role}).eq('id', update.user_id).execute()
         
         if not response.data or len(response.data) == 0:
@@ -88,91 +93,125 @@ async def set_user_role(update: RoleUpdate):
         print(f"Error updating user role with admin client: {e}")
         raise HTTPException(status_code=500, detail="Failed to set user role in database.")
 
-# DEBUG ENDPOINT: Test JWT token validation
-@app.get("/api/debug/token")
-async def debug_token(credentials: HTTPAuthorizationCredentials = Depends(security)):
-    """Debug endpoint to test JWT validation"""
-    try:
-        token = credentials.credentials
-        print(f"Debug endpoint received token: {token[:20]}...")
-        
-        SUPABASE_JWT_SECRET = os.getenv("SUPABASE_JWT_SECRET")
-        
-        if not SUPABASE_JWT_SECRET:
-            return {
-                "status": "error",
-                "error": "SUPABASE_JWT_SECRET not found in environment variables",
-                "message": "Environment configuration error"
-            }
-        
-        # Try with audience first
-        try:
-            payload = jwt.decode(token, SUPABASE_JWT_SECRET, algorithms=["HS256"], audience="authenticated")
-            print("Token decoded with audience successfully")
-        except JWTError:
-            # Try without audience
-            payload = jwt.decode(token, SUPABASE_JWT_SECRET, algorithms=["HS256"])
-            print("Token decoded without audience successfully")
-        
-        user_id = payload.get("sub")
-        user_role = get_user_role_from_db(user_id)
-        
-        return {
-            "status": "success",
-            "user_id": user_id,
-            "user_role": user_role,
-            "payload": payload,
-            "message": "Token is valid"
-        }
-    except JWTError as e:
-        return {
-            "status": "error",
-            "error": str(e),
-            "message": "Token validation failed"
-        }
-    except Exception as e:
-        return {
-            "status": "error",
-            "error": str(e),
-            "message": "Unexpected error"
-        }
-
-# --- PROTECTED ENDPOINTS (Module 2) ---
+# --- PROTECTED ENDPOINTS ---
 @app.get("/api/dashboard/summary", response_model=DashboardResponse)
 async def get_dashboard_summary(user: dict = Depends(SmeOrAuditorRequired)):
+    """
+    (IMPLEMENTED) Fetches real data for the dashboard summary based on user role.
+    """
+    user_id = user["id"]
+    user_role = user["role"]
     
-    # Placeholder Logic: In a real app, query Supabase for metrics here
-    if user["role"] == "auditor":
-        data = DashboardSummary(
-            threat_count=0,
-            compliance_score=92,
-            pending_vendor_assessments=12,
-            user_role_focus="Auditor: Review Focus"
-        )
-    else: # SME role
-        data = DashboardSummary(
-            threat_count=5,
-            compliance_score=85,
-            pending_vendor_assessments=3,
-            user_role_focus="SME: Management Focus"
-        )
+    try:
+        # 1. Get open incident tickets (threat_count)
+        threat_count_res = supabase_admin.table('incident_tickets').select('id', count='exact').eq('status', 'Open').execute()
+        threat_count = threat_count_res.count if threat_count_res.count is not None else 0
 
-    return DashboardResponse(
-        user_id=user["id"],
-        user_role=user["role"],
-        summary=data
-    )
-
-# --- EXAMPLE ENDPOINT (Module 3/4 Placeholder) ---
-@app.post("/api/scans/initiate")
-async def initiate_scan(user: dict = Depends(AdminRequired)): # Only Admin can initiate in this example
-    # Example logic for integrating with OpenVAS or a mock scanner
-    # scanner_api_key = os.getenv("OPENAVAS_API_KEY") 
-    # async with httpx.AsyncClient() as client:
-    #     response = await client.post("https://openvas.api/scan", headers={"Authorization": f"Token {scanner_api_key}"})
-    #     # ... logic to parse and write to scan_results table ...
+        # 2. Get pending vendor assessments
+        pending_assessments_res = supabase_admin.table('vendor_assessments').select('id', count='exact').eq('status', 'Pending Review').execute()
+        pending_vendor_assessments = pending_assessments_res.count if pending_assessments_res.count is not None else 0
         
-    return {"message": "Scan initiation successful."}
+        # 3. Calculate Compliance Score (example logic)
+        total_assessments_res = supabase_admin.table('vendor_assessments').select('id', count='exact').in_('status', ['Approved', 'Rejected']).execute()
+        approved_assessments_res = supabase_admin.table('vendor_assessments').select('id', count='exact').eq('status', 'Approved').execute()
+        total = total_assessments_res.count if total_assessments_res.count is not None else 0
+        approved = approved_assessments_res.count if approved_assessments_res.count is not None else 0
+        compliance_score = (approved / total * 100) if total > 0 else 100.0
+
+        # 4. Role-specific focus text
+        user_role_focus = "Auditor: Review vendor submissions and compliance reports." if user_role == "auditor" else "SME: Manage vendor assessments and remediate open incidents."
+
+        summary = DashboardSummary(
+            threat_count=threat_count,
+            compliance_score=round(compliance_score, 2),
+            pending_vendor_assessments=pending_vendor_assessments,
+            user_role_focus=user_role_focus
+        )
+
+        return DashboardResponse(
+            user_id=user_id,
+            user_role=user_role,
+            summary=summary
+        )
+
+    except Exception as e:
+        print(f"Error fetching dashboard data: {e}")
+        raise HTTPException(status_code=500, detail="Failed to retrieve dashboard metrics.")
+
+# --- NEW ENDPOINTS (from diagrams) ---
+@app.post("/api/reports/generate")
+async def generate_report(req: ReportRequest, user: dict = Depends(SmeOrAuditorRequired)):
+    """
+    (IMPLEMENTED) Creates a record in the 'reports' table to simulate report generation.
+    """
+    try:
+        response = supabase.table('reports').insert({
+            'user_id': user["id"],
+            'report_type': req.report_type,
+            'file_storage_path': f"reports/{req.report_type.replace(' ', '_')}_{user['id']}_{int(time.time())}.pdf"
+        }).execute()
+        
+        if not response.data:
+            raise HTTPException(status_code=500, detail="Failed to create report record.")
+
+        return {"message": f"'{req.report_type}' report generated successfully.", "data": response.data[0]}
+
+    except Exception as e:
+        print(f"Error generating report: {e}")
+        raise HTTPException(status_code=500, detail="An error occurred during report generation.")
+
+@app.post("/api/scans/initiate")
+async def initiate_scan(req: ScanRequest, user: dict = Depends(AdminRequired)):
+    """
+    (IMPLEMENTED) Simulates a scan, creating a scan_result and a corresponding threat.
+    """
+    try:
+        # 1. Simulate scan result
+        scan_result_res = supabase.table('scan_results').insert({
+            'target': req.target,
+            'risk_score': 7.8,
+            'details_json': {'vulnerability': 'SQL Injection', 'port': 80},
+            'run_by_id': user['id']
+        }).execute()
+        
+        if not scan_result_res.data:
+            raise HTTPException(500, "Failed to create scan result.")
+        
+        scan_result_id = scan_result_res.data[0]['id']
+
+        # 2. Correlate and create a Threat
+        threat_res = supabase.table('threats').insert({
+            'scan_result_id': scan_result_id,
+            'risk_score': 7.8,
+            'risk_level': 'High',
+            'description': f"High risk SQLi vulnerability discovered on {req.target}"
+        }).execute()
+
+        if not threat_res.data:
+            raise HTTPException(500, "Failed to create threat from scan.")
+        
+        threat_id = threat_res.data[0]['id']
+
+        # 3. Create an Incident Ticket
+        incident_res = supabase.table('incident_tickets').insert({
+            'threat_id': threat_id,
+            'status': 'Open',
+            'remediation_notes': 'Acknowledge and apply patch immediately.'
+        }).execute()
+        
+        if not incident_res.data:
+            raise HTTPException(500, "Failed to create incident ticket.")
+
+        return {
+            "message": "Scan simulation successful. Scan result, threat, and incident ticket created.",
+            "scan_id": scan_result_id,
+            "threat_id": threat_id,
+            "incident_id": incident_res.data[0]['id']
+        }
+
+    except Exception as e:
+        print(f"Error in scan simulation: {e}")
+        raise HTTPException(status_code=500, detail="Failed to simulate security scan.")
 
 if __name__ == "__main__":
     import uvicorn
