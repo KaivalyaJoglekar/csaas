@@ -1,180 +1,120 @@
-import { useEffect, useState } from 'react';
+// frontend/src/components/Dashboard.jsx
+
+import React, { useEffect, useState, useContext, useRef } from 'react';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
+import { ThemeContext } from '../App';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+const API_URL = import.meta.env.VITE_API_URL;
 
-// --- STYLES (Truncated for brevity) ---
-const colors = {
-    primary: '#007AFF', success: '#28A745', warning: '#FFC107', danger: '#DC3545', 
-    text: '#333', lightBg: '#F5F7FA', sidebarBg: '#FFFFFF', secondary: '#6C757D'
-};
-const styles = {
-    appLayout: { display: 'flex', minHeight: '100vh', fontFamily: 'Roboto, sans-serif' },
-    sidebar: { width: '280px', minWidth: '280px', backgroundColor: colors.sidebarBg, padding: '30px', boxShadow: '2px 0 10px rgba(0, 0, 0, 0.08)', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' },
-    sidebarHeader: { fontSize: '1.5rem', fontWeight: '700', color: colors.primary, marginBottom: '40px', textAlign: 'center' },
-    userInfo: { padding: '15px', borderRadius: '10px', backgroundColor: colors.lightBg, marginBottom: '30px', border: `1px solid #E0E4E8` },
-    userRole: { fontWeight: '700', color: colors.primary, marginTop: '8px', fontSize: '1rem' },
-    logoutButton: { padding: '12px 15px', backgroundColor: colors.danger, color: 'white', border: 'none', borderRadius: '10px', cursor: 'pointer', fontWeight: '600', width: '100%', transition: 'background-color 0.3s' },
-    navItem: (isActive) => ({ padding: '12px 15px', borderRadius: '8px', fontWeight: isActive ? '700' : '500', backgroundColor: isActive ? `${colors.primary}15` : 'transparent', color: isActive ? colors.primary : colors.secondary, cursor: 'pointer', marginBottom: '5px' }),
-    mainContent: { flexGrow: 1, padding: '40px', backgroundColor: colors.lightBg, overflowY: 'auto' },
-    headerTitle: { color: colors.text, margin: 0, fontWeight: '700', fontSize: '2rem' },
-    cardGrid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '25px', marginBottom: '40px' },
-    card: (color) => ({ padding: '25px', borderRadius: '12px', backgroundColor: 'white', boxShadow: '0 4px 12px rgba(0, 0, 0, 0.05)', borderLeft: `5px solid ${color}` }),
-    cardValue: { fontSize: '2.5rem', fontWeight: '700', color: colors.text, margin: '10px 0' },
-    cardSubtext: { color: colors.secondary, fontSize: '0.9rem' },
-    errorBox: { color: colors.danger, border: `1px solid ${colors.danger}`, backgroundColor: `${colors.danger}10`, padding: '15px', borderRadius: '8px', marginBottom: '20px' },
-    loadingBox: { color: colors.primary, border: `1px solid ${colors.primary}`, backgroundColor: `${colors.primary}10`, padding: '15px', borderRadius: '8px', marginBottom: '20px', textAlign: 'center' },
-    workflowCard: { padding: '25px', borderRadius: '12px', backgroundColor: 'white', boxShadow: '0 4px 12px rgba(0, 0, 0, 0.05)', minHeight: '200px' },
-    button: { padding: '12px 20px', backgroundColor: colors.primary, color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: '600' },
-    input: { width: 'calc(100% - 24px)', padding: '12px', borderRadius: '8px', border: '1px solid #E0E4E8', marginBottom: '15px' },
-};
+// --- ICON COMPONENTS (No change) ---
+const Icon = ({ path }) => <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" style={{ width: 20, height: 20 }}><path fillRule="evenodd" d={path} clipRule="evenodd" /></svg>;
+const Icons = { Dashboard: <Icon path="M9 2a1 1 0 00-1 1v1a1 1 0 002 0V3a1 1 0 00-1-1zM4 6a1 1 0 011-1h1a1 1 0 110 2H5a1 1 0 01-1-1zM2 11a1 1 0 011-1h1a1 1 0 110 2H3a1 1 0 01-1-1zM6 15a1 1 0 011-1h1a1 1 0 110 2H7a1 1 0 01-1-1zM11 4a1 1 0 100 2h1a1 1 0 100-2h-1zM13 9a1 1 0 100 2h1a1 1 0 100-2h-1zM15 13a1 1 0 100 2h1a1 1 0 100-2h-1z" />, Shield: <Icon path="M9 1.06c.278-.26.64-.423 1.03-.497C11.536.495 12.87.822 14 1.765c1.554 1.282 2.22 3.422 2.22 5.235 0 1.83-1.04 4.53-2.33 6.136a13.387 13.387 0 01-3.235 3.39c-.588.46-1.462.46-2.05 0a13.387 13.387 0 01-3.236-3.39C3.26 12.53 2.22 9.83 2.22 8c0-1.813.666-3.953 2.22-5.235C5.553.822 6.887.495 8.384.563 8.774.586 9.136.73 9.414 1.06zM10 8a2 2 0 100-4 2 2 0 000 4z" />, Alert: <Icon path="M8.257 3.099c.725-1.26 2.76-1.26 3.486 0l5.58 9.667c.726 1.26-.27 2.86-1.742 2.86H4.42c-1.472 0-2.468-1.6-1.743-2.86l5.58-9.667zM9 8a1 1 0 011-1h.01a1 1 0 110 2H10a1 1 0 01-1-1zM10 14a1 1 0 100-2 1 1 0 000 2z" />, Sun: <Icon path="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zM4.225 5.636a1 1 0 011.414-1.414l.707.707a1 1 0 01-1.414 1.414l-.707-.707zM2 10a1 1 0 011-1h1a1 1 0 110 2H3a1 1 0 01-1-1zM4.225 14.364a1 1 0 011.414 1.414l.707-.707a1 1 0 01-1.414-1.414l-.707.707zM10 18a1 1 0 011-1h.01a1 1 0 110 2H11a1 1 0 01-1-1zM15.775 5.636a1 1 0 011.414 1.414l-.707.707a1 1 0 11-1.414-1.414l.707-.707zM18 10a1 1 0 011-1h1a1 1 0 110 2h-1a1 1 0 01-1-1zM15.775 14.364a1 1 0 011.414-1.414l-.707-.707a1 1 0 011.414 1.414l.707.707z" />, Moon: <Icon path="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z" /> };
 
-// --- NEW REUSABLE COMPONENT ---
-const ReportGenerator = ({ session, user }) => {
-    const [reportType, setReportType] = useState('Vendor Compliance');
-    const [isGenerating, setIsGenerating] = useState(false);
-    const [message, setMessage] = useState('');
+// --- NEW PROFILE POPOVER COMPONENT ---
+const ProfilePopover = ({ user, onSignOut }) => (
+    <div style={styles.popover.container}>
+        <div style={styles.popover.section}>
+            <p style={styles.popover.email}>{user?.email}</p>
+        </div>
+        <div style={styles.popover.section}>
+            <button onClick={onSignOut} style={styles.popover.signOutButton}>Sign Out</button>
+        </div>
+    </div>
+);
 
-    const handleGenerate = async () => {
-        setIsGenerating(true);
-        setMessage('');
-        try {
-            const response = await axios.post(`${API_URL}/api/reports/generate`, 
-                { report_type: reportType, user_id: user.id },
-                { headers: { 'Authorization': `Bearer ${session.access_token}` } }
-            );
-            setMessage(`Success: ${response.data.message}. Path: ${response.data.data.file_storage_path}`);
-        } catch (error) {
-            setMessage(`Error: ${error.response?.data?.detail || error.message}`);
-        }
-        setIsGenerating(false);
-    };
+export default function Dashboard() {
+    const { session, user, signOut } = useAuth();
+    const { toggleTheme, themeMode } = useContext(ThemeContext);
+    const [data, setData] = useState(null);
+    const [loading, setLoading] = useState(true);
+    const [isProfileOpen, setProfileOpen] = useState(false);
+    const profileRef = useRef(null);
 
+    // Close popover when clicking outside
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (profileRef.current && !profileRef.current.contains(event.target)) {
+                setProfileOpen(false);
+            }
+        };
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => document.removeEventListener("mousedown", handleClickOutside);
+    }, [profileRef]);
+
+    useEffect(() => {
+        const fetchData = async () => {
+            if (!session) { setLoading(false); return; }
+            try {
+                const response = await axios.get(`${API_URL}/api/dashboard/summary`, { headers: { 'Authorization': `Bearer ${session.access_token}` }});
+                setData(response.data);
+            } catch (err) { console.error(err); } 
+            finally { setLoading(false); }
+        };
+        fetchData();
+    }, [session]);
+
+    if (loading) return <div className="loader-container"><div className="loader-spinner"></div></div>;
+    
     return (
-        <div style={styles.workflowCard}>
-            <h3 style={{color: colors.text, marginBottom: '20px'}}>Generate On-Demand Reports</h3>
-            <select value={reportType} onChange={(e) => setReportType(e.target.value)} style={styles.input}>
-                <option>Vendor Compliance</option>
-                <option>Risk Assessment</option>
-            </select>
-            <button onClick={handleGenerate} disabled={isGenerating} style={styles.button}>
-                {isGenerating ? 'Generating...' : 'Generate Report'}
-            </button>
-            {message && <p style={{ marginTop: '15px', color: message.startsWith('Error') ? colors.danger : colors.success }}>{message}</p>}
+        <div style={styles.layout}>
+            <aside style={styles.sidebar}>
+                <div>
+                    <div style={styles.logo}>C</div>
+                    <nav style={styles.nav}>
+                        <a href="#" style={{...styles.navLink, ...styles.navLink.active}}>{Icons.Dashboard}</a>
+                        <a href="#" style={styles.navLink}>{Icons.Shield}</a>
+                        <a href="#" style={styles.navLink}>{Icons.Alert}</a>
+                    </nav>
+                </div>
+                <div style={{ position: 'relative' }} ref={profileRef}>
+                    <button onClick={toggleTheme} style={styles.navLink}>{themeMode === 'light' ? Icons.Moon : Icons.Sun}</button>
+                    <button onClick={() => setProfileOpen(p => !p)} style={styles.avatarButton}>
+                        <img src={`https://api.dicebear.com/7.x/initials/svg?seed=${user?.email}`} alt="avatar" style={{width: '100%', height: '100%'}} />
+                    </button>
+                    {isProfileOpen && <ProfilePopover user={user} onSignOut={signOut} />}
+                </div>
+            </aside>
+            <main style={styles.mainContent}>
+                {/* Main content from previous design (still fits well) */}
+                 <h1 style={styles.headerTitle}>Dashboard</h1>
+                <div style={styles.mainGrid}>
+                     <div style={{ ...styles.card, gridColumn: 'span 2' }}>
+                        <h3 style={styles.cardTitle}>Posture Overview</h3>
+                        <div style={{ height: 250, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-secondary)' }}>[Main Graph Placeholder]</div>
+                    </div>
+                     <div style={styles.card}>
+                        <h3 style={styles.cardTitle}>Open Threats</h3>
+                        <p style={{ ...styles.metricValue, color: '#F87171' }}>{data?.summary?.threat_count ?? 'N/A'}</p>
+                    </div>
+                     <div style={styles.card}>
+                         <h3 style={styles.cardTitle}>Pending Reviews</h3>
+                        <p style={styles.metricValue}>{data?.summary?.pending_vendor_assessments ?? 'N/A'}</p>
+                    </div>
+                </div>
+            </main>
         </div>
     );
-};
-
-// --- MAIN DASHBOARD COMPONENT (Updated) ---
-export default function Dashboard() {
-  const { session, user, signOut } = useAuth();
-  const [dashboardData, setDashboardData] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [activeView, setActiveView] = useState('Dashboard'); // NEW: State for navigation
-
-  useEffect(() => {
-    const fetchDashboard = async () => {
-      if (!session?.access_token) {
-        setLoading(false);
-        setError("Your session has expired or is invalid. Please log in again.");
-        return;
-      }
-      
-      try {
-        setLoading(true);
-        setError(null);
-        const response = await axios.get(`${API_URL}/api/dashboard/summary`, {
-          headers: { 'Authorization': `Bearer ${session.access_token}` }
-        });
-        setDashboardData(response.data);
-      } catch (err) {
-        console.error("Dashboard API Call Failed:", err.response || err);
-        setError(err.response?.data?.detail || "Failed to fetch dashboard data.");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchDashboard();
-  }, [session, user]);
-
-  if (loading && !dashboardData) {
-    return <div style={{...styles.appLayout, justifyContent: 'center', alignItems: 'center'}}><div style={styles.loadingBox}>Loading application data...</div></div>;
-  }
-  
-  if (error && !dashboardData) {
-      return <div style={{...styles.appLayout, justifyContent: 'center', alignItems: 'center'}}><div style={styles.errorBox}><strong>Error:</strong> {error}</div></div>
-  }
-
-  if (!session) {
-    return <div style={{...styles.appLayout, justifyContent: 'center', alignItems: 'center'}}><div style={styles.errorBox}>Please log in to access the dashboard.</div></div>;
-  }
-
-  const currentRole = dashboardData?.user_role?.toUpperCase() || 'LOADING...';
-  const summary = dashboardData?.summary;
-
-  const renderActiveView = () => {
-      switch (activeView) {
-          case 'Reporting Engine':
-              return <ReportGenerator session={session} user={user} />;
-          case 'Dashboard':
-          default:
-              return (
-                  <>
-                      <div style={styles.cardGrid}>
-                          <div style={styles.card(colors.primary)}>
-                              <p style={styles.cardSubtext}>Role Status (Verified by Backend)</p>
-                              <p style={styles.cardValue}>{currentRole}</p>
-                          </div>
-                          <div style={styles.card(colors.danger)}>
-                              <p style={styles.cardSubtext}>Open Incident Tickets</p>
-                              <p style={styles.cardValue}>{summary?.threat_count ?? 'N/A'}</p>
-                          </div>
-                          <div style={styles.card(colors.warning)}>
-                              <p style={styles.cardSubtext}>Pending Vendor Reviews</p>
-                              <p style={styles.cardValue}>{summary?.pending_vendor_assessments ?? 'N/A'}</p>
-                          </div>
-                          <div style={styles.card(colors.success)}>
-                              <p style={styles.cardSubtext}>Overall Compliance Score</p>
-                              <p style={styles.cardValue}>{summary?.compliance_score ?? 'N/A'}%</p>
-                          </div>
-                      </div>
-                      <p style={styles.cardSubtext}>{summary?.user_role_focus}</p>
-                  </>
-              );
-      }
-  };
-
-  return (
-    <div style={styles.appLayout}>
-      <div style={styles.sidebar}>
-        <div>
-            <h2 style={styles.sidebarHeader}>CSaaS</h2>
-            <div style={styles.userInfo}>
-                <p style={{ margin: 0, fontSize: '0.9rem' }}>{user?.email}</p>
-                <p style={styles.userRole}>{currentRole}</p>
-            </div>
-            <div>
-                {['Dashboard', 'Reporting Engine'].map(view => (
-                    <p key={view} style={styles.navItem(activeView === view)} onClick={() => setActiveView(view)}>
-                        {view}
-                    </p>
-                ))}
-            </div>
-        </div>
-        <button onClick={signOut} style={styles.logoutButton}>Sign Out</button>
-      </div>
-
-      <div style={styles.mainContent}>
-        <h1 style={styles.headerTitle}>Welcome Back, {user?.email?.split('@')[0]}!</h1>
-        <h2 style={{ marginBottom: '25px', color: colors.text, fontSize: '1.2rem', fontWeight: '400' }}>
-            {activeView === 'Dashboard' ? 'Current Security Posture Overview' : activeView}
-        </h2>
-        {error && <div style={styles.errorBox}><strong>API Error:</strong> {error}</div>}
-        {renderActiveView()}
-      </div>
-    </div>
-  );
 }
+
+// --- STYLES OBJECT ---
+const styles = {
+    layout: { display: 'flex', minHeight: '100vh', fontFamily: 'var(--font-sans)', color: 'var(--text-primary)' },
+    sidebar: { width: 80, backdropFilter: 'blur(20px)', backgroundColor: 'var(--bg-secondary)', borderRight: '1px solid var(--border-color)', padding: '24px 16px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'space-between', zIndex: 10 },
+    logo: { width: 40, height: 40, borderRadius: '50%', background: 'linear-gradient(45deg, #4F46E5, #818CF8)', color: '#FFF', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem', fontWeight: 800 },
+    nav: { display: 'flex', flexDirection: 'column', gap: 16, marginTop: 40 },
+    navLink: { color: 'var(--text-secondary)', padding: 10, borderRadius: 10, display: 'flex', justifyContent: 'center', cursor: 'pointer', background: 'none', border: 'none', transition: 'all var(--transition-speed)', '&:hover': { color: 'var(--primary-accent)', backgroundColor: 'var(--primary-accent-light)' }, active: { backgroundColor: 'var(--primary-accent-light)', color: 'var(--primary-accent)' }},
+    avatarButton: { width: 40, height: 40, borderRadius: '50%', marginTop: 16, cursor: 'pointer', border: '2px solid var(--primary-accent-light)', padding: 0, overflow: 'hidden' },
+    mainContent: { flex: 1, padding: 40, overflowY: 'auto' },
+    headerTitle: { fontSize: '2rem', fontWeight: 700, marginBottom: 24 },
+    mainGrid: { display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 24 },
+    card: { backdropFilter: 'blur(20px)', backgroundColor: 'var(--bg-secondary)', borderRadius: 16, padding: 24, border: '1px solid var(--border-color)', boxShadow: 'var(--card-shadow)', transition: 'transform var(--transition-speed)', '&:hover': { transform: 'translateY(-4px)' } },
+    cardTitle: { margin: '0 0 16px 0', fontSize: '0.875rem', fontWeight: 500, color: 'var(--text-secondary)' },
+    metricValue: { margin: 0, fontSize: '2.5rem', fontWeight: 700 },
+    popover: {
+        container: { position: 'absolute', bottom: 60, left: 70, width: 220, backgroundColor: 'var(--bg-tertiary)', borderRadius: 12, boxShadow: 'var(--card-shadow)', border: '1px solid var(--border-color)', zIndex: 20, overflow: 'hidden' },
+        section: { padding: '8px', borderBottom: '1px solid var(--border-color)' },
+        email: { margin: 0, padding: '8px', fontSize: '0.875rem', fontWeight: 500, color: 'var(--text-secondary)', wordBreak: 'break-all' },
+        signOutButton: { background: 'none', border: 'none', color: '#F87171', padding: '12px', width: '100%', textAlign: 'left', fontWeight: 600, borderRadius: 6, cursor: 'pointer', '&:hover': { backgroundColor: 'rgba(248, 113, 113, 0.1)' } },
+    }
+};

@@ -1,77 +1,80 @@
-/* Import a modern, clean font if you want to override the default.
-   (e.g., from Google Fonts, but keeping it simple for now) */
-   body {
-    margin: 0;
-    padding: 0;
-    font-family: 'Roboto', 'Helvetica Neue', Arial, sans-serif;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
+
+
+/* 1. FONT IMPORT */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+/* 2. CSS VARIABLES (DESIGN SYSTEM) */
+:root {
+  --font-sans: 'Inter', sans-serif;
+  --transition-speed: 0.3s ease;
+
+  /* Light Theme */
+  --bg-primary: #F7F8FC;
+  --bg-secondary: rgba(255, 255, 255, 0.7); /* Semi-transparent for glass effect */
+  --bg-tertiary: #F1F5F9;
+  --text-primary: #0F172A;
+  --text-secondary: #64748B;
+  --border-color: rgba(226, 232, 240, 0.7);
+  --primary-accent: #4F46E5;
+  --primary-accent-light: #EEF2FF;
+  --card-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
 }
+
+.dark-mode {
+  /* Dark Theme */
+  --bg-primary: #0B0E1B;
+  --bg-secondary: rgba(24, 28, 47, 0.7); /* Semi-transparent */
+  --bg-tertiary: #21253B;
+  --text-primary: #F8FAFC;
+  --text-secondary: #94A3B8;
+  --border-color: rgba(51, 65, 85, 0.7);
+  --primary-accent: #818CF8;
+  --primary-accent-light: rgba(49, 46, 129, 0.5);
+  --card-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
+}
+
+/* 3. BASE STYLES */
 body {
   margin: 0;
-  padding: 0;
-  font-family: 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+  font-family: var(--font-sans);
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  min-height: 100vh; /* CRITICAL: Ensure body is full viewport height */
+  transition: background-color var(--transition-speed);
 }
 
-/* Ensure the main app div covers the full screen */
-#root {
-  min-height: 100vh;
-}
+* { box-sizing: border-box; }
+#root { min-height: 100vh; }
 
-/* --- Mesh Gradient for a Classy Background (Auth Page) --- */
-.auth-container-with-gradient {
-  position: relative;
+/* 4. DYNAMIC MESH GRADIENT BACKGROUND */
+#app-background {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
   overflow: hidden;
-  background-color: #F8F9FB; 
-  min-height: 100vh; /* CRITICAL: Ensure this container is full height */
-  /* All other mesh-blob styles follow... */
+  z-index: -1;
 }
-/* --- Mesh Gradient for a Classy Background (Auth Page) --- */
-/* We define a container with a subtle background and use pseudo-elements for the blob effect */
-.auth-container-with-gradient {
-    position: relative;
-    overflow: hidden;
-    /* Main light background color */
-    background-color: #F8F9FB; 
-}
-
-/* Base style for the mesh blobs */
 .mesh-blob {
-    position: absolute;
-    width: 600px;
-    height: 600px;
-    border-radius: 50%;
-    filter: blur(150px); /* Massive blur for the soft mesh look */
-    opacity: 0.4; /* Keep it subtle */
-    transition: all 0.5s ease-in-out;
-    pointer-events: none; /* Allows clicks to pass through */
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(150px);
+  opacity: 0.25;
+  transition: all 1s ease;
+  animation: blob-move 30s infinite alternate ease-in-out;
+}
+.blob-1 { width: 400px; height: 400px; top: 10%; left: 10%; background-color: #818CF8; }
+.blob-2 { width: 500px; height: 500px; top: 50%; left: 60%; background-color: #7DD3FC; animation-delay: -5s; }
+.blob-3 { width: 350px; height: 350px; top: 30%; left: 30%; background-color: #F472B6; animation-delay: -10s; }
+
+@keyframes blob-move {
+  from { transform: translate(0, 0) scale(1); }
+  to { transform: translate(200px, 100px) scale(1.3); }
 }
 
-/* Blob 1: Top-Left Subtle Warmth */
-.mesh-blob-1 {
-    background: linear-gradient(135deg, #A8E6CF, #DCEDC8); /* Soft Mint/Cream */
-    top: -200px;
-    left: -200px;
-    transform: scale(0.8);
-}
-
-/* Blob 2: Bottom-Right Coolness (Matching Primary Blue) */
-.mesh-blob-2 {
-    background: linear-gradient(315deg, #BBDEFB, #90CAF9); /* Light Blues */
-    bottom: -250px;
-    right: -250px;
-    transform: scale(0.9);
-}
-
-/* Optional: Slight animation for an even cooler effect */
-.mesh-blob-1, .mesh-blob-2 {
-    animation: blob-float 15s infinite alternate ease-in-out;
-}
-
-@keyframes blob-float {
-    from { transform: translate(0, 0) scale(0.9); }
-    to { transform: translate(50px, 30px) scale(1.1); }
-}
+/* 5. LOADER ANIMATION (No change) */
+.loader-container { display: flex; justify-content: center; align-items: center; height: 100vh; }
+.loader-spinner { width: 48px; height: 48px; border: 4px solid var(--primary-accent-light); border-bottom-color: var(--primary-accent); border-radius: 50%; display: inline-block; animation: rotation 1s linear infinite; }
+@keyframes rotation { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }

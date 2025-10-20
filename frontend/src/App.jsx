@@ -1,64 +1,57 @@
+import React, { useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import AuthForm from './components/AuthForm';
 import Dashboard from './components/Dashboard';
 
-// Custom component for protected routes
+export const ThemeContext = React.createContext();
+
 const ProtectedRoute = ({ children }) => {
     const { session, loading } = useAuth();
-    
-    // NOTE: This check is redundant now, but kept as a safeguard.
-    // The main loading check is in AppRoutes.
-    if (loading) {
-        return <p style={{ textAlign: 'center', marginTop: '50px' }}>Loading session...</p>;
-    }
-
-    if (!session) {
-        // Redirect to login if not authenticated
-        return <Navigate to="/" replace />;
-    }
-
+    if (loading) return <GlobalLoader />;
+    if (!session) return <Navigate to="/" replace />;
     return children;
 };
 
+const GlobalLoader = () => (
+    <div className="loader-container"><div className="loader-spinner"></div></div>
+);
 
 function AppRoutes() {
   const { loading } = useAuth();
-
-  // FIX: Conditionally render the entire router based on AuthContext loading state
-  if (loading) {
-    // Show a global loading message while Supabase checks the initial session
-    return <p style={{ textAlign: 'center', marginTop: '50px', fontSize: '1.2rem', color: '#007AFF' }}>Initializing Application...</p>;
-  }
-
+  if (loading) return <GlobalLoader />;
   return (
     <Routes>
-      {/* Login page is always visible at the root */}
       <Route path="/" element={<AuthForm />} />
-      
-      {/* Dashboard route is protected */}
-      <Route 
-        path="/dashboard" 
-        element={
-          <ProtectedRoute>
-            <Dashboard />
-          </ProtectedRoute>
-        } 
-      />
-      
-      {/* Catch-all for 404 */}
-      <Route path="*" element={<p style={{ textAlign: 'center', marginTop: '50px' }}>404 Not Found</p>} />
+      <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+      <Route path="*" element={<h2>404 Not Found</h2>} />
     </Routes>
   );
 }
 
 export default function App() {
+  const [themeMode, setThemeMode] = useState('dark'); // Default to dark for premium feel
+
+  useEffect(() => {
+    document.body.className = themeMode === 'dark' ? 'dark-mode' : '';
+  }, [themeMode]);
+  
+  const toggleTheme = () => {
+    setThemeMode(prevMode => (prevMode === 'light' ? 'dark' : 'light'));
+  };
+
   return (
-    <BrowserRouter>
-      <AuthProvider>
-        {/* AppRoutes contains the necessary loading check */}
-        <AppRoutes />
-      </AuthProvider>
-    </BrowserRouter>
+    <ThemeContext.Provider value={{ toggleTheme, themeMode }}>
+      <div id="app-background">
+        <div className="mesh-blob blob-1"></div>
+        <div className="mesh-blob blob-2"></div>
+        <div className="mesh-blob blob-3"></div>
+      </div>
+      <BrowserRouter>
+        <AuthProvider>
+          <AppRoutes />
+        </AuthProvider>
+      </BrowserRouter>
+    </ThemeContext.Provider>
   );
 }
