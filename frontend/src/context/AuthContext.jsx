@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useEffect } from 'react';
 // Import the Supabase client from its isolated file (Fixes HMR/Vite error)
-import { supabase } from '../supabaseClient'; 
+import { supabase } from '../supabaseClient.js'; 
 
 const AuthContext = createContext();
 
@@ -14,11 +14,18 @@ export const AuthProvider = ({ children }) => {
   // Function to manually check and set the session state
   const getAndSetSession = async () => {
     setLoading(true);
-    // Core function to read the token from local storage and set state
     const { data: { session: newSession } } = await supabase.auth.getSession();
     setSession(newSession);
     setUser(newSession?.user ?? null);
     setLoading(false);
+    return newSession;
+  };
+
+  // Function to refresh session without affecting loading state
+  const refreshSessionSilently = async () => {
+    const { data: { session: newSession } } = await supabase.auth.getSession();
+    setSession(newSession);
+    setUser(newSession?.user ?? null);
     return newSession;
   };
 
@@ -31,30 +38,53 @@ export const AuthProvider = ({ children }) => {
       (_event, session) => {
         setSession(session);
         setUser(session?.user ?? null);
-        // Only set loading=false if a signout event occurs and the state is null
         if (!session) setLoading(false); 
       }
     );
 
-    // 3. Cleanup the listener
+    // 3. Clean up the listener
     return () => {
       if (subscription) subscription.unsubscribe();
     };
   }, []);
+  
+  // CRITICAL FIX: Effect to check URL Hash for a token on every load
+  useEffect(() => {
+    const hash = window.location.hash;
+    
+    // Check if the hash contains the access_token (set by AuthForm on successful login)
+    if (hash && hash.includes('access_token')) {
+        const params = new URLSearchParams(hash.substring(1));
+        const token = params.get('access_token');
+        
+        if (token) {
+            // Set the session using the retrieved token
+            supabase.auth.setSession({ access_token: token, refresh_token: null })
+                .then(() => {
+                    // Clean the URL hash to remove the token
+                    window.history.replaceState(null, '', window.location.pathname);
+                    // Force the AuthContext to recognize the new session immediately
+                    getAndSetSession();
+                })
+                .catch(e => console.error("Error setting session from URL hash:", e));
+        }
+    }
+  }, []); // Run only on initial mount
 
   const value = {
     session,
     user,
     loading,
-    // Core Auth Methods
     signIn: (email, password) => supabase.auth.signInWithPassword({ email, password }),
     signUp: (email, password) => supabase.auth.signUp({ email, password }),
     signOut: () => {
-      // Use hard refresh on signout to clear all state reliably
       supabase.auth.signOut().then(() => window.location.href = '/');
     },
-    // Expose the manual setter for use in AuthForm (the final navigation fix)
-    getAndSetSession, 
+    getAndSetSession,
+    // Use silent refresh to avoid loading state issues
+    refreshSession: async () => {
+      await refreshSessionSilently();
+    }
   };
 
   return (

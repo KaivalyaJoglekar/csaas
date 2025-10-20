@@ -1,6 +1,10 @@
+// frontend/src/components/AuthForm.jsx (Cleaned Up & Debugged)
+
 import { useState } from 'react';
-// useEffect removed as the core logic is now in the getAndSetSession call
 import { useAuth } from '../context/AuthContext';
+import axios from 'axios'; 
+
+const API_URL = import.meta.env.VITE_API_URL;
 
 const colors = {
     primary: '#007AFF',
@@ -9,8 +13,8 @@ const colors = {
 };
 
 const styles = {
+    // Relying on CSS for full height/centering. Only inner flex is needed here.
     container: { 
-        minHeight: '100vh', 
         display: 'flex', 
         justifyContent: 'center', 
         alignItems: 'center',
@@ -43,7 +47,17 @@ const styles = {
         marginBottom: '20px',
         fontSize: '1rem',
         color: colors.text,
-        transition: 'border-color 0.3s, box-shadow 0.3s',
+    },
+    select: { // STYLE FOR SELECT BOX
+        width: '100%', 
+        padding: '14px', 
+        boxSizing: 'border-box', 
+        borderRadius: '12px', 
+        border: '1px solid #E0E4E8', 
+        marginBottom: '20px',
+        fontSize: '1rem',
+        color: colors.text,
+        backgroundColor: 'white'
     },
     button: (isPrimary) => ({ 
         width: '100%', 
@@ -56,7 +70,6 @@ const styles = {
         cursor: 'pointer',
         fontSize: '1.1rem',
         fontWeight: '600',
-        transition: 'background-color 0.3s, box-shadow 0.3s',
     }),
     switchText: {
         textAlign: 'center',
@@ -70,7 +83,7 @@ export default function AuthForm() {
   const [password, setPassword] = useState('');
   const [isLogin, setIsLogin] = useState(true);
   const [loading, setLoading] = useState(false);
-  // NEW: getAndSetSession is destructured here
+  const [selectedRole, setSelectedRole] = useState('sme');
   const { signIn, signUp, getAndSetSession } = useAuth(); 
 
   const handleSubmit = async (e) => {
@@ -81,40 +94,65 @@ export default function AuthForm() {
     
     const { data: authData, error } = await handler(email, password);
 
-    setLoading(false);
-
     if (error) {
+      setLoading(false);
       alert(`Authentication Error: ${error.message}`);
-    } else {
-        if (isLogin) {
-            // CRITICAL FIX: After successful login (authData.session exists),
-            // manually force the AuthContext state update BEFORE navigating.
-            if (authData.session) {
-                await getAndSetSession(); // Forces the AuthContext to update session=active
-                window.location.href = '/dashboard'; // Now navigation works
-            }
-        } else {
-            alert('Registration successful! Check your email for confirmation.');
-            setIsLogin(true); 
+      return;
+    } 
+
+    if (isLogin) {
+        if (authData.session) {
+            await getAndSetSession();
+            window.location.href = '/dashboard'; 
         }
+    } else {
+        if (authData.user) {
+            try {
+                await axios.post(`${API_URL}/api/admin/set-user-role`, {
+                    user_id: authData.user.id,
+                    role: selectedRole
+                });
+                alert(`Registration successful! Role set to ${selectedRole}. You can now log in.`);
+
+            } catch (e) {
+                console.error("Failed to set user role via API:", e.response?.data?.detail || e.message);
+                alert("Registration complete, but failed to set user role. Defaulting to SME.");
+            }
+        }
+        setIsLogin(true); 
     }
+    setLoading(false);
   };
 
   return (
+    // CRITICAL: Ensure className is applied to the container
     <div style={styles.container} className="auth-container-with-gradient">
+        {/* Mesh gradient blobs defined in App.css */}
         <div className="mesh-blob mesh-blob-1"></div>
         <div className="mesh-blob mesh-blob-2"></div>
         
         <form onSubmit={handleSubmit} style={styles.form}>
             <h2 style={styles.title}>{isLogin ? 'Sign In to CSaaS' : 'Register for CSaaS'}</h2>
             <div>
-                <input style={styles.input} 
-                       type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Work Email" required />
+                <input style={styles.input} type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Work Email" required />
             </div>
             <div>
-                <input style={styles.input} 
-                       type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Password" required />
+                <input style={styles.input} type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Password" required />
             </div>
+            
+            {!isLogin && (
+                <div style={{ marginBottom: '20px' }}>
+                    <select 
+                        style={styles.select}
+                        value={selectedRole}
+                        onChange={(e) => setSelectedRole(e.target.value)}
+                    >
+                        <option value="sme">SME User</option>
+                        <option value="auditor">Auditor</option>
+                    </select>
+                </div>
+            )}
+
             <button type="submit" style={styles.button(true)} disabled={loading}>
                 {loading ? 'Verifying...' : (isLogin ? 'Secure Sign In' : 'Create Account')}
             </button>
