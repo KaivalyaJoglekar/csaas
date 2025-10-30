@@ -21,16 +21,17 @@
 }
 
 .dark-mode {
-  /* Dark Theme */
-  --bg-primary: #0B0E1B;
-  --bg-secondary: rgba(24, 28, 47, 0.7); /* Semi-transparent */
-  --bg-tertiary: #21253B;
-  --text-primary: #F8FAFC;
-  --text-secondary: #94A3B8;
-  --border-color: rgba(51, 65, 85, 0.7);
-  --primary-accent: #818CF8;
-  --primary-accent-light: rgba(49, 46, 129, 0.5);
-  --card-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
+  /* Improved Dark Theme */
+  --bg-primary: #060712; /* near-black navy */
+  --bg-secondary: rgba(18, 22, 38, 0.7); /* glassy card/backdrop */
+  --bg-tertiary: #0f1724; /* slightly lighter panels */
+  --text-primary: #E6EEF8; /* off-white for reduced glare */
+  --text-secondary: #9FB0C8; /* softer secondary text */
+  --border-color: rgba(90, 110, 140, 0.18); /* subtle border */
+  --primary-accent: linear-gradient(135deg, #7C3AED 0%, #06B6D4 100%); /* vibrant purple -> teal */
+  --primary-accent-solid: #7C3AED; /* fallback solid color */
+  --primary-accent-light: rgba(124, 58, 237, 0.12);
+  --card-shadow: 0 10px 30px rgba(2, 6, 23, 0.6);
 }
 
 /* 3. BASE STYLES */
@@ -76,5 +77,17 @@ body {
 
 /* 5. LOADER ANIMATION (No change) */
 .loader-container { display: flex; justify-content: center; align-items: center; height: 100vh; }
-.loader-spinner { width: 48px; height: 48px; border: 4px solid var(--primary-accent-light); border-bottom-color: var(--primary-accent); border-radius: 50%; display: inline-block; animation: rotation 1s linear infinite; }
+.loader-spinner { width: 52px; height: 52px; border: 5px solid rgba(255,255,255,0.06); border-top-color: rgba(124,58,237,0.85); border-right-color: rgba(6,182,212,0.85); border-radius: 50%; display: inline-block; animation: rotation 1s linear infinite; box-shadow: 0 6px 18px rgba(6,11,24,0.6); }
 @keyframes rotation { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+/* Improve card styles for dark mode */
+.card { background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(0,0,0,0.06)); border: 1px solid var(--border-color); box-shadow: var(--card-shadow); }
+
+/* Accent helper class that uses gradient when available */
+.accent-btn { background: var(--primary-accent); background-clip: padding-box; color: white; }
+
+/* Improve links / nav highlight */
+a { color: var(--text-primary); }
+
+/* Slightly increase default input contrast */
+input, textarea, select { background: rgba(255,255,255,0.02); color: var(--text-primary); border: 1px solid rgba(255,255,255,0.04); padding: 10px; border-radius: 8px; }

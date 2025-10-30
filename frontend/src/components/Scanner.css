@@ -1,0 +1,339 @@
+/* Modern Scanner Styles */
+
+.scanner-modern-bg {
+  position: relative;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #f5f7fa 0%, #e4edf9 100%);
+  padding: 20px;
+  overflow: hidden;
+}
+
+/* Animated background elements */
+.scanner-modern-bg-elements {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  z-index: 0;
+}
+
+.scanner-modern-bg-element {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(60px);
+  opacity: 0.3;
+}
+
+.bg-element-1 {
+  width: 300px;
+  height: 300px;
+  background: linear-gradient(45deg, #4A55E5, #6366F1);
+  top: -100px;
+  left: -100px;
+  animation: float 15s infinite ease-in-out;
+}
+
+.bg-element-2 {
+  width: 400px;
+  height: 400px;
+  background: linear-gradient(45deg, #06B6D4, #3B82F6);
+  bottom: -150px;
+  right: -150px;
+  animation: float 18s infinite ease-in-out reverse;
+}
+
+.bg-element-3 {
+  width: 200px;
+  height: 200px;
+  background: linear-gradient(45deg, #10B981, #8B5CF6);
+  top: 50%;
+  right: 10%;
+  animation: float 12s infinite ease-in-out;
+}
+
+@keyframes float {
+  0% {
+    transform: translate(0, 0) rotate(0deg);
+  }
+  25% {
+    transform: translate(20px, 20px) rotate(5deg);
+  }
+  50% {
+    transform: translate(0, 40px) rotate(0deg);
+  }
+  75% {
+    transform: translate(-20px, 20px) rotate(-5deg);
+  }
+  100% {
+    transform: translate(0, 0) rotate(0deg);
+  }
+}
+
+/* Main container */
+.scanner-modern-container {
+  position: relative;
+  z-index: 10;
+  width: 100%;
+  max-width: 600px;
+}
+
+/* Scanner card */
+.scanner-modern-card {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  border-radius: 20px;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.scanner-modern-card:hover {
+  box-shadow: 0 30px 60px -15px rgba(0, 0, 0, 0.2);
+  transform: translateY(-5px);
+}
+
+.scanner-modern-card-inner {
+  padding: 40px;
+}
+
+/* Header section */
+.scanner-modern-header {
+  text-align: center;
+  margin-bottom: 32px;
+}
+
+.scanner-modern-title {
+  font-size: 28px;
+  font-weight: 800;
+  color: #1e293b;
+  margin: 0 0 8px;
+  letter-spacing: -0.5px;
+}
+
+.scanner-modern-subtitle {
+  font-size: 16px;
+  color: #64748b;
+  margin: 0;
+  line-height: 1.5;
+}
+
+/* Form styles */
+.scanner-modern-form {
+  margin-bottom: 24px;
+}
+
+.input-group {
+  margin-bottom: 20px;
+}
+
+.input-label {
+  display: block;
+  font-size: 14px;
+  font-weight: 500;
+  color: #334155;
+  margin-bottom: 8px;
+}
+
+.modern-input {
+  width: 100%;
+  padding: 14px 16px;
+  font-size: 16px;
+  border: 2px solid #e2e8f0;
+  border-radius: 12px;
+  background: #f8fafc;
+  color: #1e293b;
+  transition: all 0.2s ease;
+  box-sizing: border-box;
+}
+
+.modern-input:focus {
+  outline: none;
+  border-color: #4A55E5;
+  background: #ffffff;
+  box-shadow: 0 0 0 4px rgba(74, 85, 229, 0.1);
+}
+
+.modern-input::placeholder {
+  color: #94a3b8;
+}
+
+.input-hint {
+  font-size: 12px;
+  color: #94a3b8;
+  margin-top: 6px;
+}
+
+/* Error message */
+.scanner-error-message {
+  background: #fee2e2;
+  color: #dc2626;
+  padding: 12px 16px;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  font-size: 14px;
+  border-left: 4px solid #dc2626;
+}
+
+/* Buttons */
+.modern-button {
+  width: 100%;
+  padding: 16px;
+  font-size: 16px;
+  font-weight: 600;
+  color: white;
+  background: linear-gradient(135deg, #4A55E5 0%, #7C3AED 100%);
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(74, 85, 229, 0.3);
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.modern-button:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(74, 85, 229, 0.4);
+}
+
+.modern-button:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.modern-button:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.modern-button.secondary {
+  background: linear-gradient(135deg, #64748b 0%, #475569 100%);
+}
+
+.button-loader {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+}
+
+.spinner {
+  width: 20px;
+  height: 20px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  border-top-color: white;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Result card */
+.scanner-result-card {
+  background: rgba(248, 250, 252, 0.8);
+  border-radius: 16px;
+  padding: 24px;
+  margin-top: 24px;
+  border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.scanner-result-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0 0 16px 0;
+  text-align: center;
+}
+
+.scanner-result-content {
+  display: grid;
+  gap: 12px;
+}
+
+.result-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.result-item:last-child {
+  border-bottom: none;
+}
+
+.result-label {
+  font-weight: 500;
+  color: #64748b;
+}
+
+.result-value {
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.result-value.success {
+  color: #10b981;
+}
+
+.result-value.danger {
+  color: #ef4444;
+}
+
+.scanner-actions {
+  margin-top: 24px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+/* Responsive styles */
+@media (max-width: 768px) {
+  .scanner-modern-card-inner {
+    padding: 30px 24px;
+  }
+  
+  .scanner-modern-title {
+    font-size: 24px;
+  }
+  
+  .scanner-modern-subtitle {
+    font-size: 15px;
+  }
+  
+  .modern-input {
+    padding: 12px 14px;
+    font-size: 15px;
+  }
+  
+  .modern-button {
+    padding: 14px;
+    font-size: 15px;
+  }
+}
+
+@media (max-width: 480px) {
+  .scanner-modern-bg {
+    padding: 15px;
+  }
+  
+  .scanner-modern-card-inner {
+    padding: 24px 20px;
+  }
+  
+  .scanner-modern-title {
+    font-size: 22px;
+  }
+}

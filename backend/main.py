@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Depends, HTTPException
+from fastapi import FastAPI, Depends, HTTPException, File, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from pydantic import BaseModel
@@ -25,6 +25,12 @@ class RoleUpdate(BaseModel):
     user_id: str
     role: str
 
+# NEW MODEL for profile creation
+class ProfileCreate(BaseModel):
+    user_id: str
+    email: str
+    role: str = "sme"
+
 # NEW MODELS for feature implementation
 class ReportRequest(BaseModel):
     report_type: str
@@ -41,7 +47,12 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],
+    # Allow common Vite dev origins (5173 default). Include ports 5174 and 5175 which Vite may select.
+    allow_origins=[
+        "http://localhost:5173", "http://127.0.0.1:5173",
+        "http://localhost:5174", "http://127.0.0.1:5174",
+        "http://localhost:5175", "http://127.0.0.1:5175",
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -54,7 +65,9 @@ security = HTTPBearer()
 def get_user_role_from_db(user_id: str) -> str:
     """Helper function to get user role from database"""
     try:
-        response = supabase.table('profiles').select('role').eq('id', user_id).single().execute()
+        # CORRECTED LINE: Use the admin client to bypass RLS for this trusted server-side check.
+        response = supabase_admin.table('profiles').select('role').eq('id', user_id).single().execute()
+        
         if response.data and 'role' in response.data:
             return response.data['role']
         return 'unknown' 
@@ -72,6 +85,36 @@ def health_check():
         db_status = "Disconnected"
         
     return {"status": "ok", "db_status": db_status, "timestamp": time.time()}
+
+# NEW ENDPOINT for creating user profiles
+@app.post("/api/auth/create-profile")
+async def create_user_profile(profile: ProfileCreate):
+    """
+    Creates a user profile if it doesn't exist.
+    """
+    try:
+        # Check if profile already exists
+        existing_profile = supabase_admin.table('profiles').select('id').eq('id', profile.user_id).execute()
+        
+        if existing_profile.data and len(existing_profile.data) > 0:
+            # Profile already exists, return it
+            return {"message": "Profile already exists", "profile": existing_profile.data[0]}
+        
+        # Create new profile
+        response = supabase_admin.table('profiles').insert({
+            'id': profile.user_id,
+            'email': profile.email,
+            'role': profile.role
+        }).execute()
+        
+        if not response.data or len(response.data) == 0:
+            raise HTTPException(status_code=500, detail="Failed to create user profile.")
+        
+        return {"message": "Profile created successfully", "profile": response.data[0]}
+        
+    except Exception as e:
+        print(f"Error creating user profile: {e}")
+        raise HTTPException(status_code=500, detail="Failed to create user profile.")
 
 @app.post("/api/admin/set-user-role")
 async def set_user_role(update: RoleUpdate):
@@ -159,6 +202,100 @@ async def generate_report(req: ReportRequest, user: dict = Depends(SmeOrAuditorR
     except Exception as e:
         print(f"Error generating report: {e}")
         raise HTTPException(status_code=500, detail="An error occurred during report generation.")
+
+
+@app.get("/api/admin/users")
+async def list_users(user: dict = Depends(AdminRequired)):
+    """
+    Returns a list of users with basic profile info (id, email, role) — admin only.
+    """
+    try:
+        response = supabase_admin.table('profiles').select('id, email, role').execute()
+        return response.data or []
+    except Exception as e:
+        print(f"Error listing users: {e}")
+        raise HTTPException(status_code=500, detail="Failed to list users.")
+
+
+@app.get("/api/vendors")
+async def list_vendors(user: dict = Depends(SmeOrAuditorRequired)):
+    """List all vendors (SME/Auditor)."""
+    try:
+        res = supabase.table('vendors').select('*').execute()
+        return res.data or []
+    except Exception as e:
+        print(f"Error fetching vendors: {e}")
+        raise HTTPException(status_code=500, detail="Failed to fetch vendors.")
+
+
+@app.post("/api/vendors")
+async def create_vendor(payload: dict, user: dict = Depends(SmeOrAuditorRequired)):
+    try:
+        res = supabase.table('vendors').insert({
+            'name': payload.get('name'),
+            'description': payload.get('description'),
+            'contact_email': payload.get('contact_email'),
+            'created_by': user['id']
+        }).execute()
+        return res.data[0]
+    except Exception as e:
+        print(f"Error creating vendor: {e}")
+        raise HTTPException(status_code=500, detail="Failed to create vendor.")
+
+
+@app.get("/api/vendors/{vendor_id}")
+async def get_vendor(vendor_id: str, user: dict = Depends(SmeOrAuditorRequired)):
+    try:
+        res = supabase.table('vendors').select('*').eq('id', vendor_id).single().execute()
+        if not res.data:
+            raise HTTPException(status_code=404, detail="Vendor not found.")
+        return res.data
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Error getting vendor: {e}")
+        raise HTTPException(status_code=500, detail="Failed to get vendor.")
+
+
+@app.put("/api/vendors/{vendor_id}")
+async def update_vendor(vendor_id: str, payload: dict, user: dict = Depends(SmeOrAuditorRequired)):
+    try:
+        res = supabase.table('vendors').update({
+            'name': payload.get('name'),
+            'description': payload.get('description'),
+            'contact_email': payload.get('contact_email')
+        }).eq('id', vendor_id).execute()
+        if not res.data:
+            raise HTTPException(status_code=404, detail="Vendor not found or update failed.")
+        return res.data[0]
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Error updating vendor: {e}")
+        raise HTTPException(status_code=500, detail="Failed to update vendor.")
+
+
+@app.post("/api/vendors/{vendor_id}/evidence")
+async def upload_vendor_evidence(vendor_id: str, file: UploadFile = File(...), user: dict = Depends(SmeOrAuditorRequired)):
+    """
+    Accepts a multipart file and uploads it to Supabase Storage under 'evidence/{vendor_id}/...'
+    """
+    try:
+        contents = await file.read()
+        filename = f"evidence/{vendor_id}/{int(time.time())}_{file.filename}"
+        # Ensure the bucket exists named 'vendor-evidence' (assumption)
+        upload_res = supabase_admin.storage.from_('vendor-evidence').upload(filename, contents, {'content-type': file.content_type})
+        # Record metadata in a table
+        record = supabase.table('vendor_evidence').insert({
+            'vendor_id': vendor_id,
+            'uploaded_by': user['id'],
+            'file_path': filename,
+            'file_name': file.filename
+        }).execute()
+        return { 'message': 'Uploaded', 'path': filename }
+    except Exception as e:
+        print(f"Error uploading evidence: {e}")
+        raise HTTPException(status_code=500, detail="Failed to upload evidence.")
 
 @app.post("/api/scans/initiate")
 async def initiate_scan(req: ScanRequest, user: dict = Depends(AdminRequired)):

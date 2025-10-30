@@ -14,11 +14,21 @@ export const AuthProvider = ({ children }) => {
   // Function to manually check and set the session state
   const getAndSetSession = async () => {
     setLoading(true);
-    const { data: { session: newSession } } = await supabase.auth.getSession();
-    setSession(newSession);
-    setUser(newSession?.user ?? null);
-    setLoading(false);
-    return newSession;
+    try {
+      const res = await supabase.auth.getSession();
+      const newSession = res?.data?.session ?? null;
+      setSession(newSession);
+      setUser(newSession?.user ?? null);
+      return newSession;
+    } catch (e) {
+      console.error('Error getting session from Supabase:', e);
+      setSession(null);
+      setUser(null);
+      return null;
+    } finally {
+      // Ensure loading is turned off no matter what to avoid perpetual loaders
+      setLoading(false);
+    }
   };
 
   // Function to refresh session without affecting loading state
@@ -39,6 +49,8 @@ export const AuthProvider = ({ children }) => {
         setSession(session);
         setUser(session?.user ?? null);
         if (!session) setLoading(false); 
+        // If we have a session, we should stop loading
+        if (session) setLoading(false);
       }
     );
 
