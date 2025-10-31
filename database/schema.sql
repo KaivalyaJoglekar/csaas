@@ -39,6 +39,7 @@ CREATE TABLE public.vendors (
     id uuid primary key default gen_random_uuid(),
     created_at timestamp with time zone default now() not null,
     name text not null,
+    description text,
     contact_email text,
     owner_id uuid references public.profiles(id)
 );

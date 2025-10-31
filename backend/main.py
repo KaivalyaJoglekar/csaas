@@ -3,7 +3,15 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from auth.security import SmeOrAuditorRequired, AdminRequired, supabase_admin, supabase
 import os
-import fitz  # PyMuPDF
+# Prefer the canonical PyMuPDF import to avoid clashing with an unrelated 'fitz' package on PyPI
+try:  # PyMuPDF >= 1.24 provides the 'pymupdf' import path
+    import pymupdf as _pymupdf
+    def _pdf_open(*args, **kwargs):
+        return _pymupdf.open(*args, **kwargs)
+except ImportError:  # Fallback to classic 'fitz' import
+    import fitz as _pymupdf  # type: ignore
+    def _pdf_open(*args, **kwargs):
+        return _pymupdf.open(*args, **kwargs)
 import google.generativeai as genai  # Google Gemini library
 import json
 
@@ -121,13 +129,20 @@ async def initiate_scan(req: ScanRequest, user: dict = Depends(SmeOrAuditorRequi
 # -------------------- Vendors --------------------
 @app.get("/api/vendors")
 async def list_vendors(user: dict = Depends(SmeOrAuditorRequired)):
-    res = supabase.table('vendors').select('*').execute()
+    # Use elevated client for auditor/admin to avoid recursive RLS on profiles
+    if user.get('role') in ('auditor', 'admin'):
+        res = supabase_admin.table('vendors').select('*').execute()
+    else:
+        # SMEs: only list vendors they own per RLS
+        res = supabase.table('vendors').select('*').eq('owner_id', user['id']).execute()
     return res.data or []
 
 
 @app.post("/api/vendors")
 async def create_vendor(payload: dict, user: dict = Depends(SmeOrAuditorRequired)):
-    res = supabase.table('vendors').insert({
+    # Use elevated client for auditor/admin to avoid recursive RLS checks on profiles
+    client = supabase_admin if user.get('role') in ('auditor', 'admin') else supabase
+    res = client.table('vendors').insert({
         'name': payload.get('name'),
         'description': payload.get('description'),
         'contact_email': payload.get('contact_email'),
@@ -138,7 +153,9 @@ async def create_vendor(payload: dict, user: dict = Depends(SmeOrAuditorRequired
 
 @app.get("/api/vendors/{vendor_id}")
 async def get_vendor(vendor_id: str, user: dict = Depends(SmeOrAuditorRequired)):
-    res = supabase.table('vendors').select('*').eq('id', vendor_id).single().execute()
+    # Elevate for auditor/admin to bypass recursive RLS; SMEs use user-scoped client
+    client = supabase_admin if user.get('role') in ('auditor', 'admin') else supabase
+    res = client.table('vendors').select('*').eq('id', vendor_id).single().execute()
     if not res.data:
         raise HTTPException(status_code=404, detail="Vendor not found")
     return res.data
@@ -161,7 +178,7 @@ async def analyze_content(user: dict = Depends(SmeOrAuditorRequired), file: Uplo
 
     if file.content_type == "application/pdf":
         try:
-            with fitz.open(stream=file_content, filetype="pdf") as doc:
+            with _pdf_open(stream=file_content, filetype="pdf") as doc:
                 for page in doc:
                     text_to_analyze += page.get_text()
         except Exception as e:
