@@ -1,439 +1,107 @@
-/* NEW DASHBOARD STYLES
-  Based on the target HR dashboard image.
-  This replaces the 'dashboard-modern.css' content entirely.
-*/
-
-/* --- 1. Main Layout --- */
-.dashboard-target-layout {
-  display: flex;
-  min-height: 100vh;
-  width: 100%;
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
-  /* The light grey background is now on the body or a higher wrapper, 
-     but we set it on the main content area */
-}
-
-/* --- 2. Dark Sidebar --- */
-.dashboard-target-sidebar {
-  width: 280px; /* Wider to accommodate text */
-  flex-shrink: 0;
-  background: #1A202C; /* Dark background from image */
-  color: #A0AEC0; /* Light grey text */
-  padding: 24px;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  height: 100vh;
-  position: sticky;
-  top: 0;
-}
-
-.dashboard-target-logo {
-  font-size: 1.5rem;
-  font-weight: 800;
-  color: #FFFFFF;
-  padding: 0 12px;
-  margin-bottom: 32px;
-}
-
-/* --- 3. Sidebar Navigation --- */
-.dashboard-target-nav {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.dashboard-target-nav-link {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 10px 12px;
-  border-radius: 8px;
-  color: #A0AEC0; /* Idle text color */
-  text-decoration: none;
-  font-weight: 500;
-  font-size: 0.95rem;
-  transition: all 0.2s ease;
-}
-
-.dashboard-target-nav-link svg {
-  color: #A0AEC0; /* Idle icon color */
-  transition: color 0.2s ease;
-}
-
-.dashboard-target-nav-link:hover {
-  background: #2D3748; /* Darker hover */
-  color: #FFFFFF;
-}
-
-.dashboard-target-nav-link:hover svg {
-  color: #FFFFFF;
-}
-
-.dashboard-target-nav-link.active {
-  color: #FFFFFF; /* Active text color */
-  font-weight: 700;
-  /* In the image, the active link has a light grey BG, but that's the main bg.
-     We'll use bold white text as shown for "Employees" */
-}
-
-/* --- 4. Sidebar Footer --- */
-.dashboard-target-sidebar-footer {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.ai-card {
-  background: #2D3748;
-  border-radius: 12px;
-  padding: 16px;
-  text-align: center;
-}
-
-.ai-card-title {
-  font-size: 0.875rem;
-  font-weight: 600;
-  color: #FFFFFF;
-  margin: 0 0 8px 0;
-}
-
-.ai-card-link {
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: #A0AEC0;
-  text-decoration: none;
-}
-.ai-card-link:hover {
-  text-decoration: underline;
-}
-
-.user-profile {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding-top: 16px;
-  border-top: 1px solid #2D3748;
-}
-
-.user-profile-avatar {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  object-fit: cover;
-}
-
-.user-profile-details {
-  line-height: 1.4;
-}
-
-.user-profile-name {
-  font-size: 0.875rem;
-  font-weight: 600;
-  color: #FFFFFF;
-  margin: 0;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 180px;
-}
-
-.user-profile-title {
-  font-size: 0.75rem;
-  color: #A0AEC0;
-  margin: 0;
-  text-transform: capitalize;
-}
-
-/* --- 5. Main Content Area --- */
-.dashboard-target-main {
-  flex: 1;
-  padding: 32px 40px;
-  background: #F8F9FB; /* Light grey background from image */
-  color: #1A202C;
-  overflow-y: auto;
-  height: 100vh;
-}
-
-/* --- 6. Main Header --- */
-.dashboard-target-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 24px;
-}
-
-.dashboard-target-title {
-  font-size: 2rem;
-  font-weight: 800;
-  color: #1A202C;
-  margin: 0;
-}
-
-.header-icons {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-}
-
-.header-icon-btn {
-  background: none;
-  border: none;
-  color: #4A5568;
-  cursor: pointer;
-  padding: 8px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s ease;
-}
-.header-icon-btn:hover {
-  background: #E2E8F0;
-  color: #1A202C;
-}
-
-.header-signout-btn {
-  font-size: 0.875rem;
-  font-weight: 600;
-  color: #4F46E5;
-  background: #EEF2FF;
-  border: none;
-  border-radius: 8px;
-  padding: 10px 14px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-.header-signout-btn:hover {
-  background: #E0E7FF;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-}
-
-
-/* --- 7. Main Grid --- */
-.dashboard-target-grid {
+.dashboard-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr); /* 3-column layout */
+  grid-template-columns: repeat(3, 1fr);
   gap: 24px;
 }
 
-/* --- 8. Cards --- */
-.dashboard-target-card {
-  background: #FFFFFF;
-  border-radius: 16px;
-  padding: 24px;
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.04);
-  border: 1px solid #E2E8F0;
-  transition: all 0.3s ease;
-}
-
-.dashboard-target-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
-}
-
 .main-card {
-  grid-column: span 2; /* "Posture Overview" spans 2 columns */
+  grid-column: span 2;
 }
 
 .activity-card {
-  grid-column: span 1; /* "Recent Activity" spans 1 column */
+  grid-column: span 1;
 }
 
-.dashboard-target-card-title {
+.dashboard-card-title {
   margin: 0 0 16px 0;
-  font-size: 1rem;
+  font-size: 0.8rem;
   font-weight: 600;
-  color: #64748b; /* Grey title, same as original */
+  color: var(--text-secondary);
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
 
-/* Stat Cards */
-.dashboard-target-metric-value {
+.metric-value {
   margin: 0;
   font-size: 2.5rem;
   font-weight: 800;
-  color: #1e293b;
+  color: var(--text-primary);
 }
 
-.dashboard-target-metric-value.danger {
-  color: #ef4444;
+.metric-value.danger {
+  color: var(--danger);
 }
 
-/* Graph Placeholder */
-.dashboard-target-graph-placeholder {
+.graph-placeholder {
   height: 250px;
   display: flex;
   align-items: center;
   justify-content: center;
   color: #94a3b8;
-  background: #F8F9FB; /* Light grey bg */
+  background: #F8F9FB;
   border-radius: 12px;
   font-weight: 500;
 }
 
-/* --- 9. Restyled Calendar Widget --- */
-.calendar-widget {
-  background: #FFFFFF !important; /* Override inline styles if any */
-  color: #1A202C !important;
-  border-radius: 16px;
-  padding: 0; /* Padding is now on the parent card */
-  box-shadow: none;
+.activity-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
 }
 
-.calendar-header {
-  margin-bottom: 12px;
+.activity-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
-.calendar-header h3 {
+.activity-text {
+  font-size: 0.9rem;
+  font-weight: 500;
+  margin: 0 0 4px 0;
+}
+
+.activity-time {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
   margin: 0;
-  font-size: 1.125rem;
-  font-weight: 600;
-  color: #1e293b; /* Ensure dark text */
 }
 
-.calendar-icon {
-  background: #F1F5F9; /* Light grey bg for icon */
-  border-radius: 10px;
-  padding: 8px;
+.activity-icon {
+  font-size: 1.2rem;
+  background-color: #F1F5F9;
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #4F46E5; /* Accent color for icon */
 }
 
 .calendar-date {
   font-size: 0.95rem;
   font-weight: 500;
   margin-bottom: 8px;
-  color: #4A5568; /* Darker secondary text */
+  color: var(--text-secondary);
 }
 
 .calendar-time {
   font-size: 1.5rem;
   font-weight: 700;
   font-family: 'Roboto Mono', monospace;
-  color: #1e293b;
 }
 
-
-/* --- 10. Restyled Activity List --- */
-/* (Matching target's "Onboarding Tasks") */
-.dashboard-target-activity-list {
-  display: flex;
-  flex-direction: column;
-  gap: 8px; /* Tighter spacing */
-}
-
-.dashboard-target-activity-item {
-  display: flex;
-  justify-content: space-between; /* Icon moves to the right */
-  align-items: center;
-  gap: 12px;
-  padding: 12px;
-  border-radius: 12px;
-  transition: background-color 0.2s ease;
-}
-
-.dashboard-target-activity-item:hover {
-  background-color: #F8F9FB; /* Light hover */
-}
-
-.dashboard-target-activity-icon {
-  width: 32px; /* Smaller icon bg */
-  height: 32px;
-  border-radius: 50%; /* Circle icon */
-  background: #F1F5F9;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1rem;
-}
-
-.dashboard-target-activity-content {
-  flex: 1;
-}
-
-.dashboard-target-activity-text {
-  margin: 0 0 2px 0;
-  font-size: 0.9rem;
-  font-weight: 500;
-  color: #1e293b;
-}
-
-.dashboard-target-activity-time {
-  margin: 0;
-  font-size: 0.8rem;
-  color: #94a3b8;
-}
-
-/* --- 11. Responsive --- */
 @media (max-width: 1200px) {
-  .dashboard-target-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-  .activity-card {
-    grid-column: span 1;
+  .dashboard-grid {
+    grid-template-columns: 1fr 1fr;
   }
 }
 
 @media (max-width: 900px) {
-  .dashboard-target-grid {
+  .dashboard-grid {
     grid-template-columns: 1fr;
   }
   .main-card {
-    grid-column: span 1; /* All cards stack */
-  }
-  .dashboard-target-main {
-    padding: 24px;
-  }
-}
-
-@media (max-width: 768px) {
-  .dashboard-target-layout {
-    flex-direction: column;
-  }
-  
-  .dashboard-target-sidebar {
-    width: 100%;
-    height: auto;
-    position: relative;
-    flex-direction: row; /* Horizontal on mobile */
-    align-items: center;
-  }
-  
-  .dashboard-target-nav {
-    flex-direction: row;
-    margin-top: 0;
-    gap: 4px;
-    flex-wrap: wrap; /* Allow wrapping */
-  }
-
-  .dashboard-target-nav-link span {
-    display: none; /* Hide text on mobile */
-  }
-
-  .dashboard-target-nav-link {
-    padding: 8px;
-  }
-  
-  .dashboard-target-sidebar-footer {
-    display: none; /* Hide footer on mobile for space */
-  }
-  
-  .dashboard-target-main {
-    height: auto;
-  }
-
-  .dashboard-target-header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 16px;
-  }
-  
-  .header-icons {
-    width: 100%;
-    justify-content: space-between;
+    grid-column: span 1;
   }
 }

@@ -91,6 +91,10 @@ CREATE TABLE public.scan_results (
 );
 ALTER TABLE public.scan_results ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Allow all authenticated to read scan results" ON public.scan_results FOR SELECT USING (auth.role() = 'authenticated');
+-- *** FIX 1: ADDED INSERT POLICY FOR SCAN RESULTS ***
+CREATE POLICY "Allow authenticated users to create scan results" ON public.scan_results FOR INSERT
+WITH CHECK (auth.role() = 'authenticated');
+
 
 -- 10. Audit Logs Table
 CREATE TABLE public.audit_logs (
@@ -120,6 +124,9 @@ CREATE TABLE public.threats (
 );
 ALTER TABLE public.threats ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Allow read all threats" ON public.threats FOR SELECT USING (true);
+-- *** FIX 2: ADDED INSERT POLICY FOR THREATS ***
+CREATE POLICY "Allow authenticated users to create threats" ON public.threats FOR INSERT
+WITH CHECK (auth.role() = 'authenticated');
 
 
 -- 12. Incident Tickets Table (from Create Incident Ticket)
@@ -136,6 +143,9 @@ CREATE TABLE public.incident_tickets (
 ALTER TABLE public.incident_tickets ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "SME/Admin ticket management" ON public.incident_tickets FOR ALL
 USING (auth.uid() = assigned_user_id OR EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'admin'));
+-- *** FIX 3: ADDED INSERT POLICY FOR INCIDENT TICKETS ***
+CREATE POLICY "Allow authenticated users to create incident tickets" ON public.incident_tickets FOR INSERT
+WITH CHECK (auth.role() = 'authenticated');
 
 
 -- 13. Training Courses Table

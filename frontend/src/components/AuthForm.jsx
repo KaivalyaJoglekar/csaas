@@ -165,7 +165,7 @@ export default function AuthForm() {
                     onChange={(e) => setSelectedRole(e.target.value)}
                   >
                     <option value="sme">Small Business Owner</option>
-                    <option value="vendor">Vendor</option>
+                    <option value="auditor">Auditor</option>
                     <option value="admin">Administrator</option>
                   </select>
                 </div>

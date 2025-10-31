@@ -4,3 +4,5 @@ python-jose[cryptography]
 pydantic
 python-dotenv
 supabase
+openai
+PyMuPDF

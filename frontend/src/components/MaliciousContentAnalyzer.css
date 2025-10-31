@@ -1,0 +1,85 @@
+.file-upload-area {
+    margin: 24px 0;
+    }
+    .file-upload-area input[type="file"] {
+    display: none;
+    }
+    .file-upload-label {
+    display: block;
+    padding: 24px;
+    border: 2px dashed var(--border-color);
+    border-radius: 12px;
+    text-align: center;
+    cursor: pointer;
+    background-color: #F8F9FB;
+    transition: all 0.2s ease;
+    }
+    .file-upload-label:hover {
+    border-color: var(--primary-accent);
+    background-color: var(--primary-accent-light);
+    }
+    .file-upload-label span {
+    font-weight: 500;
+    color: var(--text-secondary);
+    }
+    .error-message {
+    color: var(--danger);
+    background: #fee2e2;
+    padding: 12px;
+    border-radius: 8px;
+    margin-bottom: 16px;
+    text-align: center;
+    }
+    .analysis-results {
+    margin-top: 32px;
+    padding-top: 24px;
+    border-top: 1px solid var(--border-color);
+    }
+    .results-title {
+    margin: 0 0 16px 0;
+    }
+    .result-card {
+    padding: 20px;
+    border-radius: 12px;
+    border-left-width: 5px;
+    border-left-style: solid;
+    }
+    .risk-level-display {
+    font-size: 1.1rem;
+    font-weight: 700;
+    margin-bottom: 8px;
+    }
+    .risk-level-display span {
+    font-weight: 800;
+    }
+    .summary-text {
+    margin: 0;
+    color: var(--text-primary);
+    }
+    /* Risk Level Colors */
+    .risk-safe { background-color: #f0fdf4; border-color: #22c55e; }
+    .risk-safe span { color: #166534; }
+    .risk-low { background-color: #fffbeb; border-color: #f59e0b; }
+    .risk-low span { color: #b45309; }
+    .risk-medium { background-color: #fff1f2; border-color: #f97316; }
+    .risk-medium span { color: #c2410c; }
+    .risk-high { background-color: #fee2e2; border-color: #ef4444; }
+    .risk-high span { color: #b91c1c; }
+    .risk-critical { background-color: #fee2e2; border-color: #b91c1c; }
+    .risk-critical span { color: #991b1b; }
+    .findings-section {
+    margin-top: 24px;
+    }
+    .findings-section h4 {
+    margin: 0 0 12px 0;
+    }
+    .findings-section ul {
+    padding-left: 20px;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    }
+    .findings-section li {
+    line-height: 1.5;
+    }

@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
+import { useNavigate } from 'react-router-dom'; // Import useNavigate
 import './Scanner.css';
 
 const API_URL = import.meta.env.VITE_API_URL;
@@ -12,6 +13,7 @@ export default function Scanner() {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
   const [error, setError] = useState('');
+  const navigate = useNavigate(); // Initialize navigate
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -25,6 +27,9 @@ export default function Scanner() {
     setResult(null);
     
     try {
+      // Simulate a longer scan time for better UX
+      await new Promise(resolve => setTimeout(resolve, 1500));
+
       const response = await axios.post(
         `${API_URL}/api/scans/initiate`,
         { target },
@@ -66,10 +71,10 @@ export default function Scanner() {
                   type="text"
                   value={target}
                   onChange={(e) => setTarget(e.target.value)}
-                  placeholder="Enter URL or IP address (e.g., https://example.com or 192.168.1.1)"
+                  placeholder="e.g., https://example.com"
                   aria-label="Target system to scan"
                 />
-                <p className="input-hint">Example: https://yourwebsite.com or 192.168.1.100</p>
+                <p className="input-hint">For demo, you can use any valid URL like https://example.com</p>
               </div>
 
               {error && (
@@ -100,19 +105,7 @@ export default function Scanner() {
                   </div>
                   <div className="result-item">
                     <span className="result-label">Target:</span>
-                    <span className="result-value">{result.target || target}</span>
-                  </div>
-                  <div className="result-item">
-                    <span className="result-label">Scan ID:</span>
-                    <span className="result-value">{result.scan_id}</span>
-                  </div>
-                  <div className="result-item">
-                    <span className="result-label">Threat ID:</span>
-                    <span className="result-value">{result.threat_id}</span>
-                  </div>
-                  <div className="result-item">
-                    <span className="result-label">Incident ID:</span>
-                    <span className="result-value">{result.incident_id}</span>
+                    <span className="result-value">{target}</span>
                   </div>
                   <div className="result-item">
                     <span className="result-label">Risk Level:</span>
@@ -120,19 +113,17 @@ export default function Scanner() {
                   </div>
                   <div className="result-item">
                     <span className="result-label">Vulnerability:</span>
-                    <span className="result-value">SQL Injection</span>
+                    <span className="result-value">Simulated SQL Injection</span>
                   </div>
                   <div className="result-item">
-                    <span className="result-label">Description:</span>
-                    <span className="result-value">
-                      High risk SQLi vulnerability discovered on {target}
-                    </span>
+                    <span className="result-label">Incident ID Created:</span>
+                    <span className="result-value">{result.incident_id.slice(0, 8)}...</span>
                   </div>
                 </div>
                 <div className="scanner-actions">
                   <button 
                     className="modern-button secondary"
-                    onClick={() => window.location.href = '/reports'}
+                    onClick={() => navigate('/reports')}
                   >
                     Generate Report
                   </button>
